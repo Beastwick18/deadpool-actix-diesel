@@ -1,0 +1,53 @@
+services:
+  actix-test:
+    image: actix-test
+    container_name: actix-test
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:example@db/users
+    networks:
+      - postgres
+
+  db:
+    image: postgres
+    restart: always
+    # set shared memory limit when using docker compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    #volumes:
+    #  - type: tmpfs
+    #    target: /dev/shm
+    #    tmpfs:
+    #      size: 134217728 # 128*2^20 bytes = 128Mb
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: users
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - postgres
+      - postgres-admin
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - postgres-admin
+
+networks:
+  postgres-admin:
+  postgres:
+
+volumes:
+  pgdata:
+  pgadmin-data:

@@ -1,0 +1,6 @@
+.git
+target
+.gitignore
+Dockerfile
+docker-compose.yml
+justfile
