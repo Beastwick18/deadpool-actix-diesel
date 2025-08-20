@@ -1,6 +1,8 @@
 .git
 target
+.env
 .gitignore
 Dockerfile
+Dockerfile.Alpine
 docker-compose.yml
 justfile

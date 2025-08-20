@@ -4,6 +4,7 @@ use actix_web::web;
 use deadpool::managed::Pool;
 use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
 use serde::Serialize;
+use utoipa::ToSchema;
 
 pub mod diesel;
 pub mod postgres;
@@ -13,7 +14,7 @@ pub struct AppData {
     pub diesel: Pool<AsyncDieselConnectionManager<AsyncPgConnection>>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct ApiResponse<T: Serialize> {
     data: Option<T>,
     message: String,

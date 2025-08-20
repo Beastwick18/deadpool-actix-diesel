@@ -5,16 +5,10 @@ FROM rust:slim-bookworm AS builder
 WORKDIR /src
 COPY . .
 
-# Add dependencies
-# RUN apk add --no-cache libc-dev && \
-#     apk add --no-cache postgresql-dev && \
-#     apk add --no-cache postgresql-client && \
-#     apk add --no-cache postgresql && \
-#     apk add --no-cache postgresql-contrib && \
-#     apk add --no-cache libpq-dev
-
+# Install dependencies
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends libpq-dev
+    apt-get install -y --no-install-recommends libpq-dev && \
+    apt-get install -y --no-install-recommends curl
 
 # Build executable
 RUN cargo build --release
@@ -30,10 +24,6 @@ ARG UID=1000
 ARG GID=1000
 
 ARG PORT=3000
-
-# Install dependencies
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends libpq5
 
 # Setup rootless user
 RUN groupadd --gid $GID $UNAME && \

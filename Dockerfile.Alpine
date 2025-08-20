@@ -1,0 +1,59 @@
+# Temporary builder image to create executable
+FROM rust:1-slim AS builder
+
+# Copy over src files
+WORKDIR /src
+COPY . .
+
+# Add dependencies
+# RUN apk add --no-cache libc-dev && \
+#     apk add --no-cache postgresql-dev && \
+#     apk add --no-cache postgresql-client && \
+#     apk add --no-cache postgresql && \
+#     apk add --no-cache postgresql-contrib && \
+#     apk add --no-cache libpq-dev
+
+RUN apt update -qq && apt install -y -qq --no-install-recommends \
+	musl-tools
+
+RUN rustup set profile minimal && rustup target add x86_64-unknown-linux-musl
+
+RUN apt update -y && \
+    apt install -y --no-install-recommends libpq-dev && \
+    apt install -y --no-install-recommends curl
+
+# Build executable
+ENV RUSTFLAGS='-C link-arg=-s'
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+# ------------------------------------------------------------- #
+
+# Minimal base image to run executable
+FROM alpine:latest
+
+# Args for rootless environment
+ARG UNAME=actix
+ARG UID=1000
+ARG GID=1000
+
+ARG PORT=3000
+
+RUN apk add --no-cache gcompat && \
+    apk add --no-cache postgresql-libs && \
+    apk add --no-cache libgcc && \
+    apk add --no-cache openssl
+
+# Setup rootless user
+RUN addgroup --gid $GID $UNAME && \
+    adduser --disabled-password --no-create-home --home "$(pwd)" --gecos "" --ingroup $UNAME --uid $UID $UNAME
+
+# Copy executable from previous builder image
+WORKDIR /usr/src/deadpool-actix-diesel
+COPY --from=builder /src/target/release/deadpool-actix-diesel ./
+
+# Run as rootless user
+USER $UNAME
+
+EXPOSE $PORT
+
+CMD ["./deadpool-actix-diesel"]
